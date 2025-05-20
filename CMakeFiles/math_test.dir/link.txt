@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/math_test.dir/math_test.cc.o CMakeFiles/math_test.dir/math.cc.o -o math_test   -L/opt/homebrew/lib  -Wl,-rpath,/opt/homebrew/lib -lgtest -lgtest_main

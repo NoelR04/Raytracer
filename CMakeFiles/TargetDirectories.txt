@@ -1,0 +1,5 @@
+/Users/noelrabenschlag/Desktop/Computergrafik/Raytracer/CMakeFiles/math_test.dir
+/Users/noelrabenschlag/Desktop/Computergrafik/Raytracer/CMakeFiles/geometry_test.dir
+/Users/noelrabenschlag/Desktop/Computergrafik/Raytracer/CMakeFiles/raytracer.cc.dir
+/Users/noelrabenschlag/Desktop/Computergrafik/Raytracer/CMakeFiles/edit_cache.dir
+/Users/noelrabenschlag/Desktop/Computergrafik/Raytracer/CMakeFiles/rebuild_cache.dir

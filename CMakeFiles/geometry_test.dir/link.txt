@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/geometry_test.dir/geometry_test.cc.o CMakeFiles/geometry_test.dir/math.cc.o CMakeFiles/geometry_test.dir/geometry.cc.o -o geometry_test   -L/opt/homebrew/lib  -Wl,-rpath,/opt/homebrew/lib -lgtest -lgtest_main
