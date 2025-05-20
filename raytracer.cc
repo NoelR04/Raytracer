@@ -11,7 +11,6 @@
 // hängen höchstens von den vorhergehenden Datenstrukturen ab, aber nicht umgekehrt.
 
 
-
 // Ein "Bildschirm", der das Setzen eines Pixels kapselt
 // Der Bildschirm hat eine Auflösung (Breite x Höhe)
 // Kann zur Ausgabe einer PPM-Datei verwendet werden oder
@@ -43,7 +42,6 @@ class Screen {
     struct Pixel {
       int r, g, b;
     };
-    int width, height;
     std::vector<Pixel> pixels;
   };
 
@@ -248,7 +246,6 @@ int main(void) {
   cornellBox.emplace_back(red, Sphere<float, 3>(Vector<float, 3>({-2.0f, 1.0f, 0.0f}), 1.0f));  // Rote Kugel links
   cornellBox.emplace_back(blue, Sphere<float, 3>(Vector<float, 3>({0.0f, 1.0f, 0.0f}), 1.0f)); // Weiße Kugel in der Mitte
   cornellBox.emplace_back(green, Sphere<float, 3>(Vector<float, 3>({2.0f, 1.0f, 0.0f}), 1.0f)); // Grüne Kugel rechts
-  // Kamera erstellen
   // Für jede Pixelkoordinate x,y
   //   Sehstrahl für x,y mit Kamera erzeugen
   //   Farbe mit raytracing-Methode bestimmen
