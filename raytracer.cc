@@ -17,6 +17,7 @@
 // mit SDL2 implementiert werden.
 class Screen {
   public:
+    int width, height;
     Screen(int width, int height) : width(width), height(height) {
       pixels.resize(width * height, {0, 0, 0});
     }
