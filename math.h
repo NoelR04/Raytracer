@@ -86,8 +86,7 @@ struct Vector {
   // returns the scalar (inner) product of two Vectors
   
   template <class F, size_t K>    
-  friend F operator*(Vector<F, K> vector1, const Vector<F, K> vector2);
-  
+  friend F operator*(Vector<F, K> vector1, const Vector<F, K> vector2);  
 };
 
 static const long double PI = std::acos(-1.0L);

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-//added 
 #include <fstream>
 
 // Die folgenden Kommentare beschreiben Datenstrukturen und Funktionen
@@ -120,12 +119,26 @@ struct Material {
 
 class Object {
   public:
-    Object(const Material& material, const Sphere<float, 3>& sphere)
-      : material(material), sphere(sphere) {}
-    
+      Object(const Material& material, const Sphere<float, 3>& sphere)
+          : material(material), sphere(sphere) {}
+  
+      // Prüft Ray-Sphere-Intersection und gibt t & Normal zurück
+      bool intersect(const Ray3df& ray, float& t, Vector3df& normal) const {
+          Intersection_Context<float, 3> ctx;
+          if (sphere.intersects(ray, ctx)) {
+              t = ctx.t;
+              normal = ctx.normal;
+              return true;
+          }
+          return false;
+      }
+  
+      // Getter fürs Material
+      const Material& getMaterial() const { return material; }
+  
   private:
-    Material material;
-    Sphere<float, 3> sphere;
+      Material material;
+      Sphere<float, 3> sphere;
   };
 // verschiedene Materialdefinition, z.B. Mattes Schwarz, Mattes Rot, Reflektierendes Weiss, ...
 // im wesentlichen Variablen, die mit Konstruktoraufrufen initialisiert werden.
@@ -185,76 +198,178 @@ struct Materials {
 // Die rekursive raytracing-Methode. Am besten ab einer bestimmten Rekursionstiefe (z.B. als Parameter übergeben) abbrechen.
 
 
+// ... Deine Includes und Klassendefinitionen bleiben unverändert ...
+
+// Rekursive Raytracing-Funktion
+Color trace(const Ray3df& ray,
+  const std::vector<Object>& scene,
+  const Vector3df& lightPos,
+  int depth = 2)
+{
+static int debugCounter = 0;
+if (depth == 0)
+return Color(0, 0, 0); // Schwarz bei maximaler Rekursionstiefe
+
+float minDist = std::numeric_limits<float>::max();
+const Object* hitObject = nullptr;
+Vector3df hitPoint({0.0f, 0.0f, 0.0f});
+Vector3df hitNormal({0.0f, 0.0f, 0.0f});
+
+// Schnittpunkt mit Szene suchen
+for (const auto& object : scene) {
+float t;
+Vector3df normal({0.0f, 0.0f, 0.0f});
+if (object.intersect(ray, t, normal)) {
+  if (t < minDist && t > 0.001f) {
+      minDist = t;
+      hitObject = &object;
+      hitNormal = normal;
+      hitPoint = ray.origin + t * ray.direction;
+  }
+}
+}
+
+if (!hitObject)
+return Color(0, 0, 0); // Kein Treffer → Hintergrund
+
+// --- Schattenstrahl ---
+Vector3df toLight = lightPos - hitPoint;
+float lightDist = toLight.length();
+toLight.normalize();
+
+constexpr float shadow_epsilon = 0.001f;
+Ray3df shadowRay(hitPoint + shadow_epsilon * hitNormal, toLight);
+bool inShadow = false;
+for (const auto& object : scene) {
+    if (&object == hitObject) continue; // Self-shadowing verhindern!
+    float tShadow;
+    Vector3df nShadow({0.0f, 0.0f, 0.0f});
+    if (object.intersect(shadowRay, tShadow, nShadow)) {
+        if (tShadow > shadow_epsilon && tShadow < lightDist) {
+            inShadow = true;
+            if (debugCounter < 50) {
+                std::cout << "Shadow ray hit object at t=" << tShadow << ", lightDist=" << lightDist << std::endl;
+                debugCounter++;
+            
+            break;
+        }
+    }
+}
+
+
+// --- Farb-/Lichtberechnung ---
+const Material& mat = hitObject->getMaterial();
+Vector3df color = mat.ambient; // Ambient immer
+
+if (!inShadow) {
+float diff = std::max(0.0f, hitNormal * toLight); // Skalarprodukt
+color = color + diff * mat.diffuse;
+// Optional: Hier könntest du auch einen Specular-Anteil ergänzen
+}
+
+// --- Reflexion ---
+if (depth > 1 &&
+  (mat.reflective[0] > 0.01f || mat.reflective[1] > 0.01f || mat.reflective[2] > 0.01f)) {
+  Vector3df reflDir = ray.direction - 2.0f * (ray.direction * hitNormal) * hitNormal;
+  reflDir.normalize();
+  Ray3df reflectRay(hitPoint + 0.001f * hitNormal, reflDir);
+  Color reflected = trace(reflectRay, scene, lightPos, depth - 1);
+
+  // Erzeuge einen Vektor aus der reflektierten Farbe (nutze geschweifte Klammern!)
+  Vector3df reflColor{reflected.r, reflected.g, reflected.b};
+  Vector3df temp = Vector3df({1.0f, 1.0f, 1.0f}) - mat.reflective;
+
+  // Mischung pro Komponente ("manuell")
+  for (int i = 0; i < 3; ++i) {
+      color[i] = temp[i] * color[i] + mat.reflective[i] * reflColor[i];
+  }
+}
+
+// Clamp auf [0,1]
+for (int i = 0; i < 3; ++i)
+  color[i] = std::clamp(color[i], 0.0f, 1.0f);
+return Color(color[0], color[1], color[2]);
+} }
+
 int main(void) {
-  // Bildschirm erstellen
-  Screen screen(800, 600);
-  std::vector<Object> cornellBox;
+// --- Szeneaufbau ---
+Screen screen(800, 600);
+std::vector<Object> cornellBox;
 
-  // Große Kugeln als Wände, Boden, Decke
-  Sphere<float, 3> floorSphere(Vector<float,3>({0.0f, -1000.0f, 0.0f}), 1000.0f);
-  Sphere<float, 3> ceilingSphere(Vector<float,3>({0.0f, 1002.0f, 0.0f}), 1000.0f);
-  Sphere<float, 3> leftWallSphere(Vector<float,3>({-1002.0f, 0.0f, 0.0f}), 1000.0f);
-  Sphere<float, 3> rightWallSphere(Vector<float,3>({1002.0f, 0.0f, 0.0f}), 1000.0f);
-  Sphere<float, 3> backWallSphere(Vector<float,3>({0.0f, 0.0f, -1002.0f}), 1000.0f);
+// Wände (Kugeln als Box)
+Sphere<float, 3> ceilingSphere(Vector<float,3>({0.0f, -1000.0f, 0.0f}), 1000.0f);
+Sphere<float, 3> floorSphere(Vector<float,3>({0.0f, 1002.0f, 0.0f}), 1000.0f);
+Sphere<float, 3> leftWallSphere(Vector<float,3>({-1002.0f, 0.0f, 0.0f}), 1000.0f);
+Sphere<float, 3> rightWallSphere(Vector<float,3>({1002.0f, 0.0f, 0.0f}), 1000.0f);
+Sphere<float, 3> backWallSphere(Vector<float,3>({0.0f, 0.0f, -1002.0f}), 1000.0f);
 
-  screen.setPixel(0, 0, 255, 0, 0); // Setze Pixel (0,0) auf rot
-  screen.setPixel(1, 0, 0, 255, 0); // Setze Pixel (1,0) auf grün
-  screen.setPixel(2, 0, 0, 0, 255); // Setze Pixel (2,0) auf blau
-
-
-  // Beispiel Materialien
-  Material red(
-    Vector3df({1.0f, 0.0f, 0.0f}),  // ambient
-    Vector3df({1.0f, 0.0f, 0.0f}),  // diffuse
-    Vector3df({0.1f, 0.1f, 0.1f})   // reflective
-  );
-  
-  Material green(
-    Vector3df({0.0f, 1.0f, 0.0f}),  // ambient
-    Vector3df({0.0f, 1.0f, 0.0f}),  // diffuse
-    Vector3df({0.1f, 0.1f, 0.1f})   // reflective
-  );
-  
-  Material white(
-    Vector3df({1.0f, 1.0f, 1.0f}),  // ambient
-    Vector3df({1.0f, 1.0f, 1.0f}),  // diffuse
-    Vector3df({0.1f, 0.1f, 0.1f})   // reflective
-  );
-  
-  Material blue(
-    Vector3df({0.0f, 0.0f, 1.0f}),  // ambient
-    Vector3df({0.0f, 0.0f, 1.0f}),  // diffuse
-    Vector3df({0.1f, 0.1f, 0.1f})   // reflective
-  );
-  
-
-
-  cornellBox.emplace_back(white, floorSphere);
-  cornellBox.emplace_back(white, ceilingSphere);
-  cornellBox.emplace_back(red, leftWallSphere);
-  cornellBox.emplace_back(green, rightWallSphere);
-  cornellBox.emplace_back(white, backWallSphere);
-
-  Camera camera(
-    Vector3df({0.0f, 1.0f, 5.0f}), // Position
-    Vector3df({0.0f, 1.0f, 0.0f}), // Blickrichtung
-    Vector3df({0.0f, 1.0f, 0.0f}), // Up-Vektor
-    45.0f,                         // FOV
-    screen.width, screen.height    // Auflösung
+// Materialien
+Material red(
+Vector3df({0.2f, 0.0f, 0.0f}),
+Vector3df({0.8f, 0.2f, 0.2f}),
+Vector3df({0.0f, 0.0f, 0.0f})
 );
 
-  // Kugeln in der Cornellbox
-  cornellBox.emplace_back(red, Sphere<float, 3>(Vector<float, 3>({-2.0f, 1.0f, 0.0f}), 1.0f));  // Rote Kugel links
-  cornellBox.emplace_back(blue, Sphere<float, 3>(Vector<float, 3>({0.0f, 1.0f, 0.0f}), 1.0f)); // Weiße Kugel in der Mitte
-  cornellBox.emplace_back(green, Sphere<float, 3>(Vector<float, 3>({2.0f, 1.0f, 0.0f}), 1.0f)); // Grüne Kugel rechts
-  // Für jede Pixelkoordinate x,y
-  //   Sehstrahl für x,y mit Kamera erzeugen
-  //   Farbe mit raytracing-Methode bestimmen
-  //   Beim Bildschirm die Farbe für Pixel x,y, setzten
+Material green(
+Vector3df({0.0f, 0.2f, 0.0f}),
+Vector3df({0.2f, 0.8f, 0.2f}),
+Vector3df({0.0f, 0.0f, 0.0f})
+);
 
+Material white(
+Vector3df({0.2f, 0.2f, 0.2f}),
+Vector3df({0.8f, 0.8f, 0.8f}),
+Vector3df({0.0f, 0.0f, 0.0f})
+);
 
-  screen.saveAsPPM("output.ppm"); // Speichere das Bild als PPM-Datei
-  return 0;
-}   
+Material blue(
+Vector3df({0.0f, 0.0f, 0.2f}),
+Vector3df({0.2f, 0.2f, 0.8f}),
+Vector3df({0.0f, 0.0f, 0.0f})
+);
 
+Material mirror(
+Vector3df({0.0f, 0.0f, 0.0f}),
+Vector3df({0.0f, 0.0f, 0.0f}),
+Vector3df({0.9f, 0.9f, 0.9f})
+);
 
+// Box zusammensetzen
+cornellBox.emplace_back(white, floorSphere);
+cornellBox.emplace_back(white, ceilingSphere);
+cornellBox.emplace_back(red, leftWallSphere);
+cornellBox.emplace_back(green, rightWallSphere);
+cornellBox.emplace_back(white, backWallSphere);
+
+// Kleine Kugeln (vor Raytracing-Schleife!)
+cornellBox.emplace_back(mirror, Sphere<float, 3>(Vector<float, 3>({-1.0f, 1.0f, 0.0f}), 0.3f));  // Spiegelkugel links
+cornellBox.emplace_back(blue,   Sphere<float, 3>(Vector<float, 3>({ 0.5f, 0.4f, -1.0f}), 0.3f));  // Blaukugel Mitte
+cornellBox.emplace_back(green,  Sphere<float, 3>(Vector<float, 3>({ 1.0f, 1.5f, 1.5f}), 0.3f));  // Grünkugel rechts
+
+// Kamera
+Camera camera(
+Vector3df({0.0f, 1.0f, 5.0f}), // Position
+Vector3df({0.0f, 1.0f, 0.0f}), // Blickrichtung (nach -z)
+Vector3df({0.0f, 1.0f, 0.0f}), // Up-Vektor
+45.0f,
+screen.width, screen.height
+);
+
+// Lichtquelle
+Vector3df lightPos({0.0f, 0.05f, 2.0f});
+
+// --- Raytracing ---
+for (int y = 0; y < screen.height; ++y) {
+  for (int x = 0; x < screen.width; ++x) {
+    Ray3df ray = camera.generateRay(x, y);
+    Color pixelColor = trace(ray, cornellBox, lightPos, 2);
+
+    int r, g, b;
+    pixelColor.to8BitColor(r, g, b);
+    screen.setPixel(x, y, r, g, b);
+  }
+}
+
+screen.saveAsPPM("output.ppm");
+return 0;
+}

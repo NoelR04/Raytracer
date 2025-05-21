@@ -141,4 +141,3 @@ FLOAT_TYPE Vector<FLOAT_TYPE, N>::angle(size_t axis_1, size_t axis_2) const {
   return atan2( normalized[axis_2], normalized[axis_1] );
 }
 
-
