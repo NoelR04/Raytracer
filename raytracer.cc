@@ -246,11 +246,13 @@ for (const auto& object : scene) {
     Vector3df nShadow({0.0f, 0.0f, 0.0f});
     if (object.intersect(shadowRay, tShadow, nShadow)) {
         if (tShadow > shadow_epsilon && tShadow < lightDist) {
+            // Änderung: Wenn der Shadow Ray die Boden-Kugel trifft (hier: scene[0]), diesen Treffer ignorieren!
+            if (&object == &scene[0]) continue;
             inShadow = true;
             if (debugCounter < 50) {
                 std::cout << "Shadow ray hit object at t=" << tShadow << ", lightDist=" << lightDist << std::endl;
                 debugCounter++;
-            
+            }
             break;
         }
     }
@@ -289,7 +291,7 @@ if (depth > 1 &&
 for (int i = 0; i < 3; ++i)
   color[i] = std::clamp(color[i], 0.0f, 1.0f);
 return Color(color[0], color[1], color[2]);
-} }
+} 
 
 int main(void) {
 // --- Szeneaufbau ---
