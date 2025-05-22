@@ -136,9 +136,20 @@ class Object {
 // verschiedene Materialdefinition, z.B. Mattes Schwarz, Mattes Rot, Reflektierendes Weiss, ...
 // im wesentlichen Variablen, die mit Konstruktoraufrufen initialisiert werden.
 struct Materials {
-  static Material mattSchwarz() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.0f, 0.0f, 0.0f})); 
+
+  static Material red() {
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.1f, 0.1f}), Vector3df({0.0f, 0.0f, 0.0f})); 
   }
+  static Material blue(){
+      return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.1f, 0.8f}), Vector3df({0.0f, 0.0f, 0.0f})); 
+  }
+  static Material green() {
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.8f, 0.1f}), Vector3df({0.0f, 0.0f, 0.0f})); 
+  }
+  static Material white() {
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.8f, 0.8f}), Vector3df({0.0f, 0.0f, 0.0f})); 
+  }
+
   static Material mattRot() {
      return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.1f, 0.1f}), Vector3df({0.0f, 0.0f, 0.0f})); 
   }
@@ -148,23 +159,20 @@ struct Materials {
   static Material mattBlau() {
      return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.1f, 0.8f}), Vector3df({0.0f, 0.0f, 0.0f})); 
   }
-  static Material mattWeiss() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.8f, 0.8f}), Vector3df({0.0f, 0.0f, 0.0f})); 
-  }
-  static Material reflektierendesSchwarz() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.8f, 0.8f})); 
-  }
-  static Material reflektierendesWeiss() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.8f, 0.8f}), Vector3df({0.8f, 0.8f, 0.8f})); 
-  }
+
+
   static Material reflektierendesRot() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.1f, 0.1f}), Vector3df({0.8f, 0.8f, 0.8f})); 
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.8f, 0.1f, 0.1f}), Vector3df({0.2f, 0.2f, 0.2f})); 
   }
   static Material reflektierendesGruen() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.8f, 0.1f}), Vector3df({0.8f, 0.8f, 0.8f})); 
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.8f, 0.1f}), Vector3df({0.2f, 0.2f, 0.2f})); 
   }
   static Material reflektierendesBlau() {
-     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.1f, 0.8f}), Vector3df({0.8f, 0.8f, 0.8f})); 
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.1f, 0.1f, 0.8f}), Vector3df({0.2f, 0.2f, 0.2f})); 
+  }
+  
+  static Material mirror() {
+     return Material(Vector3df({0.1f, 0.1f, 0.1f}), Vector3df({0.0f, 0.0f, 0.0f}), Vector3df({0.9f, 0.9f, 0.9f})); 
   }
 };
 
@@ -244,10 +252,10 @@ for (const auto& object : scene) {
 
 // Farbe & Licht 
 const Material& mat = hitObject->getMaterial();
-Vector3df color = mat.ambient; // Ambient immer
+Vector3df color = mat.ambient;
 
 if (!inShadow) {
-  float diff = std::max(0.0f, hitNormal * toLight); // Skalarprodukt
+  float diff = std::max(0.0f, hitNormal * toLight); 
   color = color + diff * mat.diffuse;
 }
 
@@ -283,47 +291,18 @@ Sphere<float, 3> floorSphere(Vector<float,3>({0.0f, 1002.0f, 0.0f}), 1000.0f);
 Sphere<float, 3> leftWallSphere(Vector<float,3>({-1002.0f, 0.0f, 0.0f}), 1000.0f);
 Sphere<float, 3> rightWallSphere(Vector<float,3>({1002.0f, 0.0f, 0.0f}), 1000.0f);
 Sphere<float, 3> backWallSphere(Vector<float,3>({0.0f, 0.0f, -1002.0f}), 1000.0f);
-// Materialien
-Material red(
-Vector3df({0.2f, 0.0f, 0.0f}),
-Vector3df({0.8f, 0.2f, 0.2f}),
-Vector3df({0.0f, 0.0f, 0.0f})
-);
 
-Material green(
-Vector3df({0.0f, 0.2f, 0.0f}),
-Vector3df({0.2f, 0.8f, 0.2f}),
-Vector3df({0.0f, 0.0f, 0.0f})
-);
-
-Material white(
-Vector3df({0.2f, 0.2f, 0.2f}),
-Vector3df({0.8f, 0.8f, 0.8f}),
-Vector3df({0.0f, 0.0f, 0.0f})
-);
-
-Material blue(
-Vector3df({0.0f, 0.0f, 0.2f}),
-Vector3df({0.2f, 0.2f, 0.8f}),
-Vector3df({0.0f, 0.0f, 0.0f})
-);
-
-Material mirror(
-Vector3df({0.0f, 0.0f, 0.0f}),
-Vector3df({0.0f, 0.0f, 0.0f}),
-Vector3df({0.9f, 0.9f, 0.9f})
-);
 //Wände setzen
-cornellBox.emplace_back(white, floorSphere);
-cornellBox.emplace_back(white, ceilingSphere);
-cornellBox.emplace_back(red, leftWallSphere);
-cornellBox.emplace_back(green, rightWallSphere);
-cornellBox.emplace_back(white, backWallSphere);
+cornellBox.emplace_back(Materials::white(), floorSphere);
+cornellBox.emplace_back(Materials::white(), ceilingSphere);
+cornellBox.emplace_back(Materials::red(), leftWallSphere);
+cornellBox.emplace_back(Materials::green(), rightWallSphere);
+cornellBox.emplace_back(Materials::white(), backWallSphere);
 
 //Kugeln
-cornellBox.emplace_back(mirror, Sphere<float, 3>(Vector<float, 3>({-1.0f, 1.0f, 0.0f}), 0.3f));  // Spiegelkugel links
-cornellBox.emplace_back(blue,   Sphere<float, 3>(Vector<float, 3>({ 0.5f, 0.4f, -1.0f}), 0.3f));  // Blaukugel Mitte
-cornellBox.emplace_back(green,  Sphere<float, 3>(Vector<float, 3>({ 1.0f, 1.5f, 1.5f}), 0.3f));  // Grünkugel rechts
+cornellBox.emplace_back(Materials::mirror(), Sphere<float, 3>(Vector<float, 3>({-1.0f, 1.0f, 0.0f}), 0.3f));  // Spiegelkugel links
+cornellBox.emplace_back(Materials::reflektierendesBlau(), Sphere<float, 3>(Vector<float, 3>({ 0.5f, 0.4f, -1.0f}), 0.3f));  // Blaukugel Mitte
+cornellBox.emplace_back(Materials::mattGruen(),  Sphere<float, 3>(Vector<float, 3>({ 1.0f, 1.5f, 1.5f}), 0.3f));  // Grünkugel rechts
 
 // Kamera
 Camera camera(
